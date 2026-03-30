@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="dashboard">
+
+    <nav class="navbar">
+        <span class="navbar-brand">Brainova</span>
+        <div class="navbar-right">
+            <span class="badge-role" id="badgeRole">-</span>
+            <button class="btn-logout" id="btnLogout">Log out</button>
+        </div>
+    </nav>
+
+    <div class="dashboard-wrapper">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="sub-text" id="welcomeText">Memuat data...</p>
+
+        <div class="notice">
+            ✅ <strong>Session aktif.</strong> Data di bawah diambil dari <code>$_SESSION</code> PHP.
+        </div>
+
+        <div class="card">
+            <div class="card-label">Informasi Akun</div>
+            <div class="info-row">
+                <span class="info-label">Nama</span>
+                <span class="info-value" id="infoName">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value" id="infoEmail">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Role</span>
+                <span class="info-value" id="infoRole">-</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-label">Cookie</div>
+            <div class="info-row">
+                <span class="info-label">Remember Me</span>
+                <span class="info-value" id="infoCookie">-</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        fetch('auth.php?action=check')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.loggedIn) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                const user = data.user;
+                const roleLabel = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+
+                document.getElementById('welcomeText').textContent = 'Halo, ' + user.name + '! Kamu berhasil login.';
+                document.getElementById('badgeRole').textContent = roleLabel;
+                document.getElementById('infoName').textContent = user.name;
+                document.getElementById('infoEmail').textContent = user.email;
+                document.getElementById('infoRole').textContent = roleLabel;
+
+                const hasCookie = data.hasCookie || document.cookie.split(';').some(c => c.trim().startsWith('remember_user='));
+                document.getElementById('infoCookie').textContent = hasCookie
+                    ? '✅ Cookie aktif (7 hari)'
+                    : '❌ Tidak ada cookie';
+            })
+            .catch(() => {
+                window.location.href = 'index.html';
+            });
+
+        document.getElementById('btnLogout').addEventListener('click', async () => {
+            const formData = new FormData();
+            formData.append('action', 'logout');
+
+            const res = await fetch('auth.php', { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if (data.redirect) window.location.href = data.redirect;
+        });
+    </script>
+
+</body>
+
+</html>
